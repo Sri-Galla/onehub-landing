@@ -191,8 +191,11 @@ export default function Aurora({
 
   return (
   <div
-    ref={ctnDom}
-    className="absolute inset-0 pointer-events-none opacity-20 z-[1]"
-  />
+  ref={ctnDom}
+  className="absolute inset-0 pointer-events-none z-[1] animate-auroraPulse"
+  style={{ opacity: 0.2 }}
+/>
 );
 }
+
+

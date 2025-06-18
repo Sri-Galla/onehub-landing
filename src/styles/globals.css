@@ -4,10 +4,32 @@
 
 @layer base {
   :root {
-    --primary-color: #0D1117;
-    --secondary-color: #F0F6FC;
-    --font-geist: 'Geist', ui-sans-serif, system-ui, sans-serif;
+  --bg: #0D1117;
+  --panel: #161B22;
+  --border: #30363D;
+  --hover: #1C222B;
+  
+  --text-primary: #F0F6FC;
+  --text-secondary: #8B949E;
+  --text-disabled: #6E7681;
+
+  --action: #1F4B99;
+  --action-hover: #173B7F;
+  --link-glow: #3FBDF0;
+  --trust-green: #3BAA6D;
+  --warn-yellow: #E3B341;
+  --error-red: #D64242;
+
+  --glow-restore: #00FFA0;
+  --border-attention: #47A3F3;
+  --status-dot: #EAC464;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-text-primary;
   }
+}
 
   body {
     @apply antialiased font-sans;
@@ -16,6 +38,7 @@
     font-family: var(--font-geist);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  
   }
 }
 
@@ -100,4 +123,43 @@
 
 .footer-links a:hover {
   color: white;
+}
+/* === OneHub footer extras (must live AFTER @tailwind utilities) ============== */
+@layer components {
+  .onehub-footer {
+    background: rgba(14, 16, 21, 0.65);           /* darker glass */
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.4);
+  }
+
+  .footer-link {
+    @apply flex items-center gap-1 transition
+            text-white/70 hover:text-white;
+  }
+}
+@layer base {
+  html, body {
+    overflow-x: hidden;
+  }
+}
+
+@layer base {
+  html, body {
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    overscroll-behavior: none;
+  }
+}
+
+@keyframes auroraPulse {
+  0%, 100% { opacity: 0.18; }
+  50% { opacity: 0.25; }
+}
+
+@layer utilities {
+  .animate-auroraPulse {
+    animation: auroraPulse 20s ease-in-out infinite;
+  }
 }
