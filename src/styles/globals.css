@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --primary-color: #0D1117;
+    --secondary-color: #F0F6FC;
+    --font-geist: 'Geist', sans-serif;
+  }
+
+  body {
+    @apply antialiased font-sans;
+    background-color: var(--primary-color);
+    color: var(--secondary-color);
+  }
+}
+
+@layer components {
+  .animate-blink {
+    animation: blink 1s step-end infinite;
+  }
+}
+
+@keyframes blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
