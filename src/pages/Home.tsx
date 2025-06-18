@@ -1,5 +1,5 @@
 // src/pages/Home.tsx
-import { Hero } from "@/components/Hero";
+import Hero from "@/components/Hero";
 import Footer from "@/components/Footer";
 
 export default function Home() {
