@@ -3,8 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
 
 /* =========================================================================
- *  OneHubDB • Hero v1.1 (Figma-accurate)
- *  Doubt ➜ Challenge ➜ Prompt ➜ One-liner ➜ CTA
+ *  OneHubDB • Hero v1.1 (Figma‑accurate)
+ *  Doubt ➜ Challenge ➜ Prompt ➜ One‑liner ➜ CTA
  *  All elements are absolutely positioned inside a fixed 811×84 container so
  *  nothing shifts vertically. Escape / Enter / click outside = instant skip.
  * ========================================================================= */
@@ -26,7 +26,7 @@ enum Step {
   Glow,
 }
 
-// Fine-tuned timing (ms)
+// Fine‑tuned timing (ms)
 const T = {
   grid: 300,
   line1: 1000,
@@ -41,9 +41,6 @@ export default function Hero() {
   const [typed, setTyped] = useState("");
   const timers = useRef<NodeJS.Timeout[]>([]);
 
-  // -----------------------------------------------------------------------
-  // Sequencer helpers
-  // -----------------------------------------------------------------------
   const seq = (delay: number, next: Step) => {
     timers.current.push(setTimeout(() => setStep(next), delay));
   };
@@ -53,18 +50,13 @@ export default function Hero() {
     timers.current = [];
   };
 
-  // -----------------------------------------------------------------------
-  // Mount-time sequence
-  // -----------------------------------------------------------------------
   useEffect(() => {
     seq(T.grid, Step.Grid);
     seq(T.grid + T.line1, Step.Line1);
     seq(T.grid + T.line1 + T.line2, Step.Line2);
     seq(T.grid + T.line1 + T.line2 + T.blink, Step.Blink);
     seq(T.grid + T.line1 + T.line2 + T.blink + T.typingStart, Step.Typing);
-    // CTA + Glow happen inside typing handler
 
-    // Skip handlers
     const finish = () => {
       clearTimers();
       setTyped(fullCommand);
@@ -85,9 +77,6 @@ export default function Hero() {
     };
   }, []);
 
-  // -----------------------------------------------------------------------
-  // Typing animation
-  // -----------------------------------------------------------------------
   useEffect(() => {
     if (step !== Step.Typing) return;
 
@@ -105,22 +94,15 @@ export default function Hero() {
       timers.current.push(setTimeout(() => requestAnimationFrame(run), jitter()));
     };
 
-    // Type instantly the first `$ ` for familiarity
     setTyped("$ ");
     i = 2;
     timers.current.push(setTimeout(() => requestAnimationFrame(run), 200));
   }, [step]);
 
-  // -----------------------------------------------------------------------
-  // Helpers
-  // -----------------------------------------------------------------------
   const copyCommand = () => {
     navigator.clipboard.writeText(fullCommand).catch(() => {});
   };
 
-  // -----------------------------------------------------------------------
-  // Render
-  // -----------------------------------------------------------------------
   return (
     <section
       tabIndex={0}
@@ -139,9 +121,9 @@ export default function Hero() {
         )}
       </AnimatePresence>
 
-      
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[calc(50%+96px)] w-[811px] h-[180px] select-none">
-        {/* Line 1 (moved up) */}
+      {/* Content */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[calc(50%+96px)] w-[811px] h-[180px] select-none">
+        {/* Line 1 */}
         {step >= Step.Line1 && (
           <motion.p
             className="absolute top-[0px] left-0 w-full text-center font-mono font-semibold text-[48px] leading-[64px] text-text-secondary"
@@ -153,7 +135,7 @@ export default function Hero() {
           </motion.p>
         )}
 
-        {/* Line 2 (moved up) */}
+        {/* Line 2 */}
         {step >= Step.Line2 && (
           <motion.p
             className="absolute top-[64px] left-0 w-full text-center font-mono font-bold text-[48px] leading-[64px] text-text-secondary"
@@ -165,36 +147,52 @@ export default function Hero() {
           </motion.p>
         )}
 
-        {/* Cursor-only blink */}
-        {step === Step.Blink && (
-          <div className="absolute top-[128px] left-0 flex w-full justify-center">
-            <span className="h-6 w-4 bg-white animate-blink" />
-          </div>
-        )}
-
-        {/* Typing / One-liner */}
+        {/* One-liner */}
         {step >= Step.Typing && (
           <motion.pre
-            className="onehub-terminal absolute top-[136px] left-0 w-full overflow-hidden text-center font-mono font-bold text-[clamp(1.4rem,4.2vw,3.1rem)] whitespace-nowrap"
+            className="onehub-terminal relative absolute top-[136px] left-0 w-full text-center font-mono font-bold text-[clamp(1.4rem,4.2vw,3.1rem)] whitespace-nowrap"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3 }}
           >
             {typed}
-            {step < Step.Glow && <span className="animate-blink">▌</span>}
+            {step >= Step.Line1 && step < Step.Glow && (
+  <motion.span
+    className="animate-blink inline-block"
+    initial={{ opacity: 1 }}
+    animate={{ opacity: [1, 0, 1, 0, 1] }}
+    transition={{
+      duration: 2,
+      ease: "easeInOut",
+      times: [0, 0.25, 0.5, 0.75, 1],
+      repeat: Infinity,
+    }}
+  >
+    ▌
+  </motion.span>
+)}
+
+
             {step === Step.Glow && (
               <button
                 aria-label="Copy command"
                 onClick={copyCommand}
-                className="ml-3 inline-flex items-center justify-center rounded-sm p-1 text-text-secondary transition hover:scale-105 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+                className="absolute right-0 -top-4 p-1 text-text-secondary hover:text-white transition hover:scale-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
                   viewBox="0 0 24 24"
-                  fill="currentColor"
-                  className="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="lucide-copy"
                 >
-                  <path d="M8 5a3 3 0 0 1 3-3h7a3 3 0 0 1 3 3v11a3 3 0 0 1-3 3h-1v2a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3V10a3 3 0 0 1 3-3h1V5Zm3-1a1 1 0 0 0-1 1v2h6a3 3 0 0 1 3 3v7h1a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1H11ZM5 9a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-2H11a3 3 0 0 1-3-3V9H5Z" />
+                  <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                  <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
                 </svg>
               </button>
             )}
@@ -219,7 +217,7 @@ export default function Hero() {
         )}
       </div>
 
-      {/* Blink keyframes */}
+      {/* Blink animation */}
       <style>
         {`
         @keyframes blink {
