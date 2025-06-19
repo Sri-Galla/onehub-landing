@@ -9,9 +9,6 @@ import clsx from "clsx";
  *  nothing shifts vertically. Escape / Enter / click outside = instant skip.
  * ========================================================================= */
 
-// -------------------------------------------------------------------------
-// Constants
-// -------------------------------------------------------------------------
 const chunks = ["$", " ", "curl", " ", "-sSL", " ", "onehub", ".", "sh", " ", "|", " ", "bash"];
 const fullCommand = chunks.join("");
 
@@ -26,7 +23,6 @@ enum Step {
   Glow,
 }
 
-// Fine‑tuned timing (ms)
 const T = {
   grid: 300,
   line1: 1000,
@@ -36,7 +32,7 @@ const T = {
   ctaDelay: 400,
 };
 
-export default function Hero() {
+export default function Hero({ onEnter }: { onEnter: () => void }) {
   const [step, setStep] = useState<Step>(Step.Blank);
   const [typed, setTyped] = useState("");
   const timers = useRef<NodeJS.Timeout[]>([]);
@@ -63,7 +59,14 @@ export default function Hero() {
       setStep(Step.Glow);
     };
 
-    const onKey = (e: KeyboardEvent) => ["Escape", "Enter"].includes(e.key) && finish();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Enter") {
+        finish();
+        onEnter();
+      }
+      if (e.key === "Escape") finish();
+    };
+
     const onClick = (e: MouseEvent) => {
       if (!(e.target as HTMLElement).closest(".onehub-terminal")) finish();
     };
@@ -108,7 +111,6 @@ export default function Hero() {
       tabIndex={0}
       className="relative flex h-screen flex-col items-center justify-center overflow-hidden bg-background text-text-primary"
     >
-      {/* Grid background */}
       <AnimatePresence>
         {step >= Step.Grid && (
           <motion.div
@@ -121,9 +123,7 @@ export default function Hero() {
         )}
       </AnimatePresence>
 
-      {/* Content */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[calc(50%+96px)] w-[811px] h-[180px] select-none">
-        {/* Line 1 */}
         {step >= Step.Line1 && (
           <motion.p
             className="absolute top-[0px] left-0 w-full text-center font-mono font-semibold text-[48px] leading-[64px] text-text-secondary"
@@ -135,7 +135,6 @@ export default function Hero() {
           </motion.p>
         )}
 
-        {/* Line 2 */}
         {step >= Step.Line2 && (
           <motion.p
             className="absolute top-[64px] left-0 w-full text-center font-mono font-bold text-[48px] leading-[64px] text-text-secondary"
@@ -147,7 +146,6 @@ export default function Hero() {
           </motion.p>
         )}
 
-        {/* One-liner */}
         {step >= Step.Typing && (
           <motion.pre
             className="onehub-terminal relative absolute top-[136px] left-0 w-full text-center font-mono font-bold text-[clamp(1.4rem,4.2vw,3.1rem)] whitespace-nowrap"
@@ -157,21 +155,20 @@ export default function Hero() {
           >
             {typed}
             {step >= Step.Line1 && step < Step.Glow && (
-  <motion.span
-    className="animate-blink inline-block"
-    initial={{ opacity: 1 }}
-    animate={{ opacity: [1, 0, 1, 0, 1] }}
-    transition={{
-      duration: 2,
-      ease: "easeInOut",
-      times: [0, 0.25, 0.5, 0.75, 1],
-      repeat: Infinity,
-    }}
-  >
-    ▌
-  </motion.span>
-)}
-
+              <motion.span
+                className="animate-blink inline-block"
+                initial={{ opacity: 1 }}
+                animate={{ opacity: [1, 0, 1, 0, 1] }}
+                transition={{
+                  duration: 2,
+                  ease: "easeInOut",
+                  times: [0, 0.25, 0.5, 0.75, 1],
+                  repeat: Infinity,
+                }}
+              >
+                ▌
+              </motion.span>
+            )}
 
             {step === Step.Glow && (
               <button
@@ -199,11 +196,10 @@ export default function Hero() {
           </motion.pre>
         )}
 
-        {/* CTA */}
         {step >= Step.CTA && (
           <motion.button
             type="button"
-            onClick={() => console.log("restore triggered")}
+            onClick={onEnter}
             className="absolute top-[224px] left-0 mx-auto flex w-full items-center justify-center gap-2 font-mono text-base text-text-secondary transition-transform duration-300 ease-out hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
             initial={{ opacity: 0, y: 8, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -217,15 +213,14 @@ export default function Hero() {
         )}
       </div>
 
-      {/* Blink animation */}
       <style>
         {`
-        @keyframes blink {
-          0%, 100% { opacity: 1 }
-          50% { opacity: 0 }
-        }
-        .animate-blink { animation: blink 1s step-end infinite; }
-      `}
+          @keyframes blink {
+            0%, 100% { opacity: 1 }
+            50% { opacity: 0 }
+          }
+          .animate-blink { animation: blink 1s step-end infinite; }
+        `}
       </style>
     </section>
   );

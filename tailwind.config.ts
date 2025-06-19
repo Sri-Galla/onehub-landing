@@ -15,10 +15,14 @@ const config: Config = {
         "text-secondary": "#8B949E",
         "text-disabled": "#6E7681",
         glow: "#00FFA0",
+        // Brand-specific additions
+        "brand-cobalt": "#1F4B99", // same as action
+        "brand-green": "#3BAA6D",
+        "accent-red": "#E5484D",
       },
       fontFamily: {
-        sans: ['var(--font-geist)', 'sans-serif'], // For general UI
-        mono: ['Geist Mono', 'monospace'],         // For terminal / code
+        sans: ['var(--font-geist)', 'sans-serif'], // For UI text
+        mono: ['Geist Mono', 'monospace'],         // For terminal
       },
     },
   },
