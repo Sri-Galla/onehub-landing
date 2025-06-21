@@ -507,7 +507,7 @@ export default function RestoreInput({
                 onClick={onRunDemo}
                 className="group relative inline-block rounded-md bg-transparent px-8 py-3 text-base font-medium text-[#F5F7FA] transition-transform duration-150 ease-out hover:scale-105 focus:scale-105"
               >
-                <span className="relative z-10">Run Demo Database</span>
+                <span className="relative z-10">Upload .dump file</span>
                 {/* Inner glow on hover */}
                 <span className="absolute inset-0 rounded-md opacity-0 bg-brand-cobalt/20 transition-opacity duration-150 ease-out group-hover:opacity-30" />
                 <span className="block h-px w-0 bg-brand-cobalt transition-all duration-300 group-hover:w-full"></span>
