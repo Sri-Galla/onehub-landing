@@ -1,0 +1,147 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: restore-sandbox-job
+spec:
+  ttlSecondsAfterFinished: 180
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      initContainers:
+        - name: fetch-dump
+          image: curlimages/curl:8.5.0
+          command: ["sh", "-c"]
+          args:
+            - |
+              set -euo pipefail
+              DUMP_URL="http://host.minikube.internal:8000/exampledump-good.dump"
+              curl --retry 3 -fSL "$DUMP_URL" -o /restore/input.dump
+          volumeMounts:
+            - name: dump
+              mountPath: /restore
+      containers:
+        - name: db
+          image: postgres:16.2-alpine
+          env:
+            - name: POSTGRES_PASSWORD
+              value: postgres
+          command: ["sh", "-c"]
+          args:
+            - |
+              set -e
+              /usr/local/bin/docker-entrypoint.sh postgres &
+              pg_pid=$!
+              while [ ! -f /shared/restore.done ]; do sleep 1; done
+              su-exec postgres pg_ctl -D "$PGDATA" stop -m fast
+              wait "$pg_pid"
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: dump
+              mountPath: /restore
+            - name: shared
+              mountPath: /shared
+
+        - name: restore
+          image: postgres:16.2-alpine
+          env:
+            - name: PGPASSWORD
+              value: postgres
+            - name: DATA_DELAY_SECONDS
+              value: "0"
+            - name: CHECKSUM_MISMATCH
+              value: "false"
+            - name: TARGET_DSN
+              value: "TARGET_DSN_PLACEHOLDER"
+          command: ["sh", "-c"]
+          args:
+            - |
+              set -e
+              if [ -n "${TARGET_DSN:-}" ]; then
+                DEST_DB="$TARGET_DSN"
+              else
+                until pg_isready -h localhost -p 5432 -U postgres >/dev/null 2>&1; do sleep 1; done
+                createdb -h localhost -p 5432 -U postgres test_restore
+                DEST_DB="postgresql://postgres@localhost:5432/test_restore"
+              fi
+
+              RESTORE_LOG="/shared/restore.log"
+              START_TS=$(date +%s)
+              set -o pipefail
+              set +e
+              pg_restore --verbose \
+                         --exit-on-error \
+                         --single-transaction \
+                         --clean --if-exists \
+                         --no-owner --no-acl \
+                         -d "$DEST_DB" /restore/input.dump 2>&1 | tee "$RESTORE_LOG"
+              rc=$?
+              set -e
+              END_TS=$(date +%s)
+              if [ "$rc" -ne 0 ]; then ERRORS=1; else ERRORS=0; fi
+
+              DATA_DELAY_SECONDS=${DATA_DELAY_SECONDS:-0}
+              WARNINGS=$(grep -ci "^pg_restore: .*WARNING:" "$RESTORE_LOG" || true)
+              OBJECTS_RESTORED=$(grep -c "^pg_restore: creating" "$RESTORE_LOG" || true)
+              ROWS_RESTORED=$(grep -c "^pg_restore: processing data for table" "$RESTORE_LOG" || true)
+
+              RISK_COUNT=$(psql "$DEST_DB" -At <<'SQL'
+              WITH flags AS (
+                  SELECT 1 WHERE EXISTS (
+                      SELECT 1 FROM information_schema.columns
+                      WHERE column_name = 'legacy_field'
+                  )
+                  UNION ALL
+                  SELECT 1
+                  WHERE EXISTS (
+                      SELECT 1 FROM information_schema.tables
+                      WHERE table_name = 'customers'
+                  ) AND NOT EXISTS (
+                      SELECT 1 FROM information_schema.columns
+                      WHERE table_name = 'customers' AND column_name = 'is_active'
+                  )
+                  UNION ALL
+                  SELECT 1 WHERE EXISTS (
+                      SELECT 1 FROM information_schema.columns
+                      WHERE column_name ILIKE '%secret%' OR table_name ILIKE '%secret%'
+                  )
+                  UNION ALL
+                  SELECT 1 WHERE EXISTS (SELECT 1 FROM pg_proc WHERE prosecdef)
+              )
+              SELECT count(*) FROM flags;
+              SQL
+              )
+
+              DURATION=$((END_TS-START_TS))
+              DUMP_MB=$(du -m /restore/input.dump | awk '{print $1}')
+              RESTORED_AT=$(date -u -d @"$END_TS" +"%Y-%m-%dT%H:%M:%SZ")
+              CS_PENALTY=0
+
+              if [ "$ERRORS" -gt 0 ]; then TRUST_LEVEL="FAIL";
+              elif [ "$WARNINGS" -gt 0 ] || [ "$RISK_COUNT" -gt 0 ]; then TRUST_LEVEL="DANGEROUS";
+              else TRUST_LEVEL="SUCCESS"; fi
+
+              echo "Metrics:" && \
+              echo "  errors:               $ERRORS" && \
+              echo "  risk_matches:         $RISK_COUNT" && \
+              echo "  objects_restored:     $OBJECTS_RESTORED" && \
+              echo "  rows_restored:        $ROWS_RESTORED" && \
+              echo "  restore_duration_sec: $DURATION" && \
+              echo "  dump_size_mb:         $DUMP_MB" && \
+              echo "  restored_at_utc:      $RESTORED_AT" && \
+              echo "Trust Level: $TRUST_LEVEL"
+
+              if [ -z "${TARGET_DSN:-}" ]; then dropdb -h localhost -p 5432 -U postgres test_restore; fi
+              touch /shared/restore.done
+
+          volumeMounts:
+            - name: dump
+              mountPath: /restore
+            - name: shared
+              mountPath: /shared
+      volumes:
+        - name: dump
+          emptyDir: {}
+        - name: shared
+          emptyDir: {}

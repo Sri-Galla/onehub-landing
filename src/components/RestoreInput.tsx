@@ -151,11 +151,13 @@ function usePing(host?: string) {
 interface Props {
   onRunRestore: (dsn: string) => void;
   onRunDemo: () => void;
+  onUploadDump: () => void; // NEW PROP
 }
 
 export default function RestoreInput({
   onRunRestore,
   onRunDemo,
+  onUploadDump, // NEW PROP
 }: Props) {
   const [dsn, setDsn] = useState("");
   const validation = useValidation(dsn);
@@ -504,7 +506,7 @@ export default function RestoreInput({
               </div>
               <button
                 type="button"
-                onClick={onRunDemo}
+                onClick={onUploadDump} // CHANGED
                 className="group relative inline-block rounded-md bg-transparent px-8 py-3 text-base font-medium text-[#F5F7FA] transition-transform duration-150 ease-out hover:scale-105 focus:scale-105"
               >
                 <span className="relative z-10">Upload .dump file</span>
